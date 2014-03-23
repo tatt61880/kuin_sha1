@@ -1,0 +1,59 @@
+{
+	Sha1Sample.kn v1.00 (for Kuin 1.01):
+		Last Modified: 2014/03/23 23:57:58.
+		Created by Tatt(@tatt61880)
+		https://twitter.com/tatt61880
+		https://github.com/tatt61880
+}
+func Main()
+	func str2bin(str: []char): []byte8
+		var ret: []byte8 :: #[0]byte8
+		foreach c(str)
+			do ret :~ [c $ byte8]
+		end foreach
+		return ret
+	end func
+	func bin2str(bin: []byte8): []char
+		var ret: []char :: #[0]char
+		foreach b(bin)
+			do ret :~ [b $ char]
+		end foreach
+		return ret
+	end func
+	var inputFileName: []char
+	if(Kuin@GetCmdLines().Len() > 1)
+		do inputFileName :: Kuin@GetCmdLines()[1]
+		do Dbg@Log("Input File: " ~ inputFileName)
+	else
+		do Dbg@Log("Usage: ハッシュ値を調べたいファイルをexeファイルにドラッグアンドドロップしてください。")
+		do Kuin@Exit()
+	end if
+
+	var data: []byte8 :: File@ReadFile(inputFileName)
+
+    var sha: Sha1@CContext :: (#Sha1@CContext).Init()
+    var err: Sha1@EResult
+
+    var Message_Digest: []byte8 :: #[20]byte8
+
+	do err :: Sha1@Reset(sha)
+	if(err <> Sha1@EResult#shaSuccess)
+		do Dbg@Log("SHA1Reset Error " ~ (err $ int).ToStr() ~ ".")
+	end if
+
+	do err :: Sha1@Input(sha, data, data.Len())
+	if(err <> Sha1@EResult#shaSuccess)
+		do Dbg@Log("SHA1@Input Error " ~ (err $ int).ToStr() ~ ".")
+	end if
+
+	do err :: Sha1@Result(sha, Message_Digest)
+	if(err <> Sha1@EResult#shaSuccess)
+		do Dbg@Log("SHA1Result Error " ~ (err $ int).ToStr() ~ ", could not compute message digest.")
+	else
+		var str: []char :: ""
+		for i(0, 19)
+			do str :~ (Message_Digest[i] $ int).ToStrF("02x")
+		end for
+		do Dbg@Log("Message Digest: " ~ str)
+	end if
+end func
