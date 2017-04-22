@@ -1,0 +1,72 @@
+{
+	sha1_sample.kn:
+		Last Modified: 2017/04/22 20:09:36.
+		Created by Tatt(@tatt61880)
+		https://twitter.com/tatt61880
+		https://github.com/tatt61880
+}
+func main()
+	func str2bin(str: []char): []bit8
+		var retVal: []bit8 :: #[0]bit8
+		foreach c(str)
+			do retVal :~ [c $ bit8]
+		end foreach
+		ret retVal
+	end func
+	func bin2str(bin: []bit8): []char
+		var retVal: []char :: #[0]char
+		foreach b(bin)
+			do retVal :~ [b $ char]
+		end foreach
+		ret retVal
+	end func
+	var inputFileName: []char
+	if(^lib@cmdLine() > 0)
+		do inputFileName :: lib@cmdLine()[0]
+		do cui@print("Input File: \{inputFileName}\n")
+	else
+		do cui@print("Usage: sha1_sample.exe filepath(ハッシュ値を調べたいファイル)\n")
+		ret
+	end if
+
+	var reader: file@Reader :: file@makeReader(inputFileName)
+	var data: []bit8 :: reader.read(reader.fileSize())
+
+    var sha: \sha1@Context :: #\sha1@Context
+    var err: \sha1@Result
+
+    var messageDigest: []bit8 :: #[20]bit8
+
+	do err :: \sha1@reset(sha)
+	if(err <> %shaSuccess)
+		do cui@print("SHA1Reset Error \{err $ int}.\n")
+	end if
+
+	do err :: \sha1@input(sha, data, ^data)
+	if(err <> %shaSuccess)
+		do cui@print("SHA1@Input Error \{err $ int}.\n")
+	end if
+
+	do err :: \sha1@result(sha, messageDigest)
+	if(err <> %shaSuccess)
+		do cui@print("SHA1Result Error \{err $ int}, could not compute message digest.")
+	else
+		var str: []char :: ""
+		for i(0, 19)
+			do str :~ X2(messageDigest[i] $ int)
+			func X2(num: int): []char
+				func X(n: int): char
+					if(0 <= n & n < 10)
+						ret (n + '0' $ int) $ char
+					elif(10 <= n & n < 16)
+						ret (n + 'A' $ int - 10) $ char
+					else
+						assert false
+					end if
+				end func
+				ret [X(num / 16), X(num % 16)]
+			end func
+		end for
+		do cui@print("Message Digest: \{str}\n")
+	end if
+end func

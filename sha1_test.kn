@@ -1,0 +1,100 @@
+{
+	Sha1Test.kn v1.00 (for Kuin 1.01):
+		Last Modified: 2017/04/22 20:17:17.
+		Created by Tatt(@tatt61880)
+		https://twitter.com/tatt61880
+		https://github.com/tatt61880
+}
+func main()
+	func str2bin(str: []char): []bit8
+		var retVal: []bit8 :: #[0]bit8
+		foreach c(str)
+			do retVal :~ [c $ bit8]
+		end foreach
+		ret retVal
+	end func
+	func bin2str(bin: []bit8): []char
+		var retVal: []char :: #[0]char
+		foreach b(bin)
+			do retVal :~ [b $ char]
+		end foreach
+		ret retVal
+	end func
+	var testArray: [][]bit8 :: [
+	|str2bin("abc"),
+	|str2bin("abcdbcdecdefdefgefghfghighijhi" ~ "jkijkljklmklmnlmnomnopnopq"),
+	|str2bin("a"),
+	|str2bin("01234567012345670123456701234567" ~ "01234567012345670123456701234567")
+	|]
+ 
+	var repeatcount: []int :: [1, 1, 1000000, 10]
+	var resultArray: [][]char :: [
+	|"A9 99 3E 36 47 06 81 6A BA 3E 25 71 78 50 C2 6C 9C D0 D8 9D",
+	|"84 98 3E 44 1C 3B D2 6E BA AE 4A A1 F9 51 29 E5 E5 46 70 F1",
+	|"34 AA 97 3C D4 C4 DA A4 F6 1E EB 2B DB AD 27 31 65 34 01 6F",
+	|"DE A3 56 A2 CD DD 90 C7 A7 EC ED C5 EB B5 63 93 4F 46 04 52"
+	|]
+ 
+	var sha: \sha1@Context :: #\sha1@Context
+	var err: \sha1@Result
+ 
+	var messageDigest: []bit8 :: #[20]bit8
+ 
+	{Perform SHA-1 tests}
+	for j(0, ^testArray - 1)
+		do cui@print("Test \{j + 1}:\n")
+		do cui@print("  input = '" ~ bin2str(testArray[j]) ~ "'" ~ "(length=\{^testArray[j]})\n")
+		do cui@print("  repeat count = \{repeatcount[j]}\n")
+ 
+		do err :: \sha1@reset(sha)
+		if(err <> %shaSuccess)
+			do cui@print("SHA1Reset Error \{err $ int}.\n")
+			break j
+		end if
+ 
+		for i(0, repeatcount[j] - 1)
+			do err :: \sha1@input(sha, testArray[j], ^testArray[j])
+			if(err <> %shaSuccess)
+				do cui@print("input Error \{err $ int}.\n")
+				break i
+			end if
+		end for
+ 
+		do err :: \sha1@result(sha, messageDigest)
+		if(err <> %shaSuccess)
+			do cui@print("SHA1Result Error \{err $ int}, could not compute message digest.\n")
+		else
+			var str: []char :: ""
+			for i(0, 19)
+				do str :~ (i = 0) ?("", " ")
+				;do str :~ (messageDigest[i] $ int).toStrF("02X")
+				do str :~ X2(messageDigest[i] $ int)
+				func X2(num: int): []char
+					func X(n: int): char
+						if(0 <= n & n < 10)
+							ret (n + '0' $ int) $ char
+						elif(10 <= n & n < 16)
+							ret (n + 'A' $ int - 10) $ char
+						else
+							assert false
+						end if
+					end func
+					ret [X(num / 16), X(num % 16)]
+				end func
+			end for
+			do cui@print("  output = \{str}\n")
+			if(str = resultArray[j])
+				do cui@print("  result: Correct!\n")
+			else
+				do cui@print("  result: Failed.\n")
+				do cui@print("  expected:\{resultArray[j]}\n")
+			end if
+		end if
+	end for
+
+	{Test some error returns}
+	do err :: \sha1@input(sha, testArray[1], 1)
+	do cui@print("Error \{err $ int}. Should be \{%shaStateError $ \sha1@Result $ int}.\n")
+	do err :: \sha1@reset(null)
+	do cui@print("Error \{err $ int}. Should be \{%shaNull $ \sha1@Result $ int}.\n")
+end func

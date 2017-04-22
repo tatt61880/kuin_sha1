@@ -1,6 +1,6 @@
 {
-	Sha1.kn v1.00 (for Kuin 1.01):
-		Last Modified: 2014/03/22 15:02:07.
+	sha1.kn:
+		Last Modified: 2017/04/22 20:08:03.
 		Created by Tatt(@tatt61880)
 		https://twitter.com/tatt61880
 		https://github.com/tatt61880
@@ -12,233 +12,233 @@
 	下記のページ内のコードを参考に作成しました。
 		http://www.ipa.go.jp/security/rfc/RFC3174JA.html
 }
-enum EResult
+
+const sha1hashSize: int :: 20
+
++enum Result
 	shaSuccess :: 0
 	shaNull			{Null pointer parameter}
 	shaInputTooLong	{input data too long}
-	shaStateError	{called Input after Result}
+	shaStateError	{called input after result}
 end enum
 
-const SHA1HashSize: int :: 20
-
-class CContext()
-	var Intermediate_Hash: []byte32 {Message Digest}
-	var Length_Low: byte32	{Message length in bits}
-	var Length_High: byte32	{Message length in bits}
-	var Message_Block_Index: int	{Index into message block array}
-	var Message_Block: []byte8	{512-bit message blocks}
-	var Computed: bool	{Is the digest computed?}
-	var State: @EResult	{Is the message digest corrupted?}
-	func Init(): @CContext
-		do me.Intermediate_Hash :: #[@SHA1HashSize / 4]byte32
-		do me.Message_Block :: #[64]byte8
-		return me
++class Context()
+	+var intermediateHash: []bit32 {Message Digest}
+	+var lengthLow: bit32	{Message length in bits}
+	+var lengthHigh: bit32	{Message length in bits}
+	+var messageBlockIndex: int	{Index into message block array}
+	+var messageBlock: []bit8	{512-bit message blocks}
+	+var computed: bool	{Is the digest computed?}
+	+var state: @Result	{Is the message digest corrupted?}
+	*func ctor()
+		do me.intermediateHash :: #[@sha1hashSize / 4]bit32
+		do me.messageBlock :: #[64]bit8
 	end func
 end class
 
-func CircularShift(bits: int, word: byte32): byte32
-	return word.Shl(bits).Or(word.Shr(32 - bits))
+func circularShift(bits: int, word: bit32): bit32
+	ret word.shl(bits).or(word.shr(32 - bits))
 end func
 
-func Reset(context: @CContext): @EResult
++func reset(context: @Context): @Result
 	if(context =& null)
-		return @EResult#shaNull
+		ret %shaNull
 	end if
 
-	do context.Length_Low			:: 0 $ byte32
-	do context.Length_High			:: 0 $ byte32
-	do context.Message_Block_Index	:: 0
+	do context.lengthLow			:: 0b32
+	do context.lengthHigh			:: 0b32
+	do context.messageBlockIndex	:: 0
 
-	do context.Intermediate_Hash[0]	:: 16#67452301 $ byte32
-	do context.Intermediate_Hash[1]	:: 16#efcdab89 $ byte32
-	do context.Intermediate_Hash[2]	:: 16#98badcfe $ byte32
-	do context.Intermediate_Hash[3]	:: 16#10325476 $ byte32
-	do context.Intermediate_Hash[4]	:: 16#c3d2e1f0 $ byte32
+	do context.intermediateHash[0]	:: 16#67452301b32
+	do context.intermediateHash[1]	:: 16#EFCDAB89b32
+	do context.intermediateHash[2]	:: 16#98BADCFEb32
+	do context.intermediateHash[3]	:: 16#10325476b32
+	do context.intermediateHash[4]	:: 16#C3D2E1F0b32
 
-	do context.Computed	:: false
-	do context.State	:: @EResult#shaSuccess
+	do context.computed	:: false
+	do context.state	:: %shaSuccess
 
-	return @EResult#shaSuccess
+	ret %shaSuccess
 end func
 
-func Result(context: @CContext, Message_Digest: []byte8): @EResult
++func result(context: @Context, messageDigest: []bit8): @Result
 	var i: int
-	if(context =& null | Message_Digest =& null)
-		return @EResult#shaNull
+	if(context =& null | messageDigest =& null)
+		ret %shaNull
 	end if
 
-	if(context.State <> @EResult#shaSuccess)
-		return context.State
+	if(context.state <> %shaSuccess)
+		ret context.state
 	end if
 
-	if(!context.Computed)
-		do @PadMessage(context)
+	if(!context.computed)
+		do @padMessage(context)
 		for i(0, 63)
 			{message may be sensitive, clear it out}
-			do context.Message_Block[i] :: 0 $ byte8
+			do context.messageBlock[i] :: 0b8
 		end for
-		do context.Length_Low :: 0 $ byte32	{ and clear length}
-		do context.Length_High :: 0 $ byte32
-		do context.Computed :: true
+		do context.lengthLow :: 0b32	{and clear length}
+		do context.lengthHigh :: 0b32
+		do context.computed :: true
 	end if
 
-	for i(0, @SHA1HashSize - 1)
-		do Message_Digest[i] :: context.Intermediate_Hash[(i $ byte8).Shr(2) $ int].Shr(8 * (3 - ((i $ byte8).And(16#03 $ byte8) $ int))) $ byte8
+	for i(0, @sha1hashSize - 1)
+		do messageDigest[i] :: context.intermediateHash[(i $ bit8).shr(2) $ int].shr(8 * (3 - ((i $ bit8).and(16#03b8) $ int))) $ bit8
 	end for
 
-	return @EResult#shaSuccess
+	ret %shaSuccess
 end func
 
-func Input(context: @CContext, message_array: []byte8, length: int): @EResult
++func input(context: @Context, messageArray: []bit8, length: int): @Result
 	if(length = 0)
-		return @EResult#shaSuccess
+		ret %shaSuccess
 	end if
 
-	if(context =& null | message_array =& null)
-		return @EResult#shaNull
+	if(context =& null | messageArray =& null)
+		ret %shaNull
 	end if
 
-	if(context.Computed)
-		do context.State :: @EResult#shaStateError
-		return @EResult#shaStateError
+	if(context.computed)
+		do context.state :: %shaStateError
+		ret %shaStateError
 	end if
 
-	if(context.State <> @EResult#shaSuccess)
-		return context.State
+	if(context.state <> %shaSuccess)
+		ret context.state
 	end if
 
-	var message_array_index: int :: 0
-	while(length <> 0 & context.State = @EResult#shaSuccess)
+	var messageArrayIndex: int :: 0
+	while(length <> 0 & context.state = %shaSuccess)
 		do length :- 1
-		do context.Message_Block[context.Message_Block_Index] :: message_array[message_array_index]
-		do context.Message_Block_Index :+ 1
+		do context.messageBlock[context.messageBlockIndex] :: messageArray[messageArrayIndex]
+		do context.messageBlockIndex :+ 1
 
-		do context.Length_Low :+ 8 $ byte32
-		if(context.Length_Low = 0 $ byte32)
-			do context.Length_High :+ 1 $ byte32
-			if(context.Length_High = 0 $ byte32)
+		do context.lengthLow :+ 8b32
+		if(context.lengthLow = 0b32)
+			do context.lengthHigh :+ 1b32
+			if(context.lengthHigh = 0b32)
 				{Message is too long}
-				do context.State :: @EResult#shaNull
+				do context.state :: %shaNull
 			end if
 		end if
 
-		if(context.Message_Block_Index = 64)
-			do @ProcessMessageBlock(context)
+		if(context.messageBlockIndex = 64)
+			do @processMessageBlock(context)
 		end if
-		do message_array_index :+ 1
+		do messageArrayIndex :+ 1
 	end while
 
-	return @EResult#shaSuccess
+	ret %shaSuccess
 end func
 
 
-func ProcessMessageBlock(context: @CContext)
-	var K: []byte32 :: [16#5a827999 $ byte32, 16#6ed9eba1 $ byte32, 16#8f1bbcdc $ byte32, 16#ca62c1d6 $ byte32] {Constants defined in SHA-1}
+func processMessageBlock(context: @Context)
+	var k: []bit32 :: [16#5A827999b32, 16#6ED9EBA1b32, 16#8F1BBCDCb32, 16#CA62C1D6b32] {Constants defined in SHA-1}
 	var t: int						{Loop counter}
-	var temp: byte32				{Temporary word value}
-	var W: []byte32 :: #[80]byte32	{Word sequence}
-	var A: byte32	{Word buffers}
-	var B: byte32
-	var C: byte32
-	var D: byte32
-	var E: byte32
+	var temp: bit32					{Temporary word value}
+	var w: []bit32 :: #[80]bit32	{Word sequence}
+	var a: bit32 {Word buffers}
+	var b: bit32
+	var c: bit32
+	var d: bit32
+	var e: bit32
 
-	{Initialize the first 16 words in the array W}
+	{Initialize the first 16 words in the array w}
 	for t(0, 15)
-		do W[t] ::         (context.Message_Block[t * 4    ] $ byte32).Shl(24)
-		do W[t] :: W[t].Or((context.Message_Block[t * 4 + 1] $ byte32).Shl(16))
-		do W[t] :: W[t].Or((context.Message_Block[t * 4 + 2] $ byte32).Shl( 8))
-		do W[t] :: W[t].Or((context.Message_Block[t * 4 + 3] $ byte32))
+		do w[t] :: (context.messageBlock[t * 4    ] $ bit32).shl(24)
+		do w[t] :: (context.messageBlock[t * 4 + 1] $ bit32).shl(16).or(w[t])
+		do w[t] :: (context.messageBlock[t * 4 + 2] $ bit32).shl( 8).or(w[t])
+		do w[t] :: (context.messageBlock[t * 4 + 3] $ bit32).or(w[t])
 	end for
 
 	for t(16, 79)
-		do W[t] :: @CircularShift(1, W[t - 3].Xor(W[t - 8]).Xor(W[t - 14]).Xor(W[t - 16]))
+		do w[t] :: @circularShift(1, w[t - 3].xor(w[t - 8]).xor(w[t - 14]).xor(w[t - 16]))
 	end for
 
-	do A :: context.Intermediate_Hash[0]
-	do B :: context.Intermediate_Hash[1]
-	do C :: context.Intermediate_Hash[2]
-	do D :: context.Intermediate_Hash[3]
-	do E :: context.Intermediate_Hash[4]
+	do a :: context.intermediateHash[0]
+	do b :: context.intermediateHash[1]
+	do c :: context.intermediateHash[2]
+	do d :: context.intermediateHash[3]
+	do e :: context.intermediateHash[4]
 
 	for t(0, 19)
-		do temp :: @CircularShift(5, A) + B.And(C).Or(B.Not().And(D)) + E + W[t] + K[0]
-		do E :: D
-		do D :: C
-		do C :: @CircularShift(30, B)
-		do B :: A
-		do A :: temp
+		do temp :: @circularShift(5, a) + b.and(c).or(b.not().and(d)) + e + w[t] + k[0]
+		do e :: d
+		do d :: c
+		do c :: @circularShift(30, b)
+		do b :: a
+		do a :: temp
 	end for
 
 	for t(20, 39)
-		do temp :: @CircularShift(5, A) + B.Xor(C).Xor(D) + E + W[t] + K[1]
-		do E :: D
-		do D :: C
-		do C :: @CircularShift(30, B)
-		do B :: A
-		do A :: temp
+		do temp :: @circularShift(5, a) + b.xor(c).xor(d) + e + w[t] + k[1]
+		do e :: d
+		do d :: c
+		do c :: @circularShift(30, b)
+		do b :: a
+		do a :: temp
 	end for
 
 	for t(40, 59)
-		do temp :: @CircularShift(5, A) + B.And(C).Or(B.And(D)).Or(C.And(D)) + E + W[t] + K[2]
-		do E :: D
-		do D :: C
-		do C :: @CircularShift(30, B)
-		do B :: A
-		do A :: temp
+		do temp :: @circularShift(5, a) + b.and(c).or(b.and(d)).or(c.and(d)) + e + w[t] + k[2]
+		do e :: d
+		do d :: c
+		do c :: @circularShift(30, b)
+		do b :: a
+		do a :: temp
 	end for
 
 	for t(60, 79)
-		do temp :: @CircularShift(5, A) + B.Xor(C).Xor(D) + E + W[t] + K[3]
-		do E :: D
-		do D :: C
-		do C :: @CircularShift(30, B)
-		do B :: A
-		do A :: temp
+		do temp :: @circularShift(5, a) + b.xor(c).xor(d) + e + w[t] + k[3]
+		do e :: d
+		do d :: c
+		do c :: @circularShift(30, b)
+		do b :: a
+		do a :: temp
 	end for
 
-	do context.Intermediate_Hash[0] :+ A
-	do context.Intermediate_Hash[1] :+ B
-	do context.Intermediate_Hash[2] :+ C
-	do context.Intermediate_Hash[3] :+ D
-	do context.Intermediate_Hash[4] :+ E
+	do context.intermediateHash[0] :+ a
+	do context.intermediateHash[1] :+ b
+	do context.intermediateHash[2] :+ c
+	do context.intermediateHash[3] :+ d
+	do context.intermediateHash[4] :+ e
 
-	do context.Message_Block_Index :: 0
+	do context.messageBlockIndex :: 0
 end func
 
-func PadMessage(context: @CContext)
-	if(context.Message_Block_Index > 55)
-		do context.Message_Block[context.Message_Block_Index] :: 16#80 $ byte8
-		do context.Message_Block_Index :+ 1
-		while(context.Message_Block_Index < 64)
-			do context.Message_Block[context.Message_Block_Index] :: 0 $ byte8
-			do context.Message_Block_Index :+ 1
+func padMessage(context: @Context)
+	if(context.messageBlockIndex > 55)
+		do context.messageBlock[context.messageBlockIndex] :: 16#80b8
+		do context.messageBlockIndex :+ 1
+		while(context.messageBlockIndex < 64)
+			do context.messageBlock[context.messageBlockIndex] :: 0b8
+			do context.messageBlockIndex :+ 1
 		end while
 
-		do @ProcessMessageBlock(context)
+		do @processMessageBlock(context)
 
-		while(context.Message_Block_Index < 56)
-			do context.Message_Block[context.Message_Block_Index] :: 0 $ byte8
-			do context.Message_Block_Index :+ 1
+		while(context.messageBlockIndex < 56)
+			do context.messageBlock[context.messageBlockIndex] :: 0b8
+			do context.messageBlockIndex :+ 1
 		end while
 	else
-		do context.Message_Block[context.Message_Block_Index] :: 16#80 $ byte8
-		do context.Message_Block_Index :+ 1
+		do context.messageBlock[context.messageBlockIndex] :: 16#80b8
+		do context.messageBlockIndex :+ 1
 
-		while(context.Message_Block_Index < 56)
-			do context.Message_Block[context.Message_Block_Index] :: 0 $ byte8
-			do context.Message_Block_Index :+ 1
+		while(context.messageBlockIndex < 56)
+			do context.messageBlock[context.messageBlockIndex] :: 0b8
+			do context.messageBlockIndex :+ 1
 		end while
 	end if
 
-	do context.Message_Block[56] :: (context.Length_High).Shr(24) $ byte8
-	do context.Message_Block[57] :: (context.Length_High).Shr(16) $ byte8
-	do context.Message_Block[58] :: (context.Length_High).Shr(8) $ byte8
-	do context.Message_Block[59] :: (context.Length_High) $ byte8
-	do context.Message_Block[60] :: (context.Length_Low).Shr(24) $ byte8
-	do context.Message_Block[61] :: (context.Length_Low).Shr(16) $ byte8
-	do context.Message_Block[62] :: (context.Length_Low).Shr(8) $ byte8
-	do context.Message_Block[63] :: (context.Length_Low) $ byte8
+	do context.messageBlock[56] :: (context.lengthHigh).shr(24) $ bit8
+	do context.messageBlock[57] :: (context.lengthHigh).shr(16) $ bit8
+	do context.messageBlock[58] :: (context.lengthHigh).shr(8) $ bit8
+	do context.messageBlock[59] :: (context.lengthHigh) $ bit8
+	do context.messageBlock[60] :: (context.lengthLow).shr(24) $ bit8
+	do context.messageBlock[61] :: (context.lengthLow).shr(16) $ bit8
+	do context.messageBlock[62] :: (context.lengthLow).shr(8) $ bit8
+	do context.messageBlock[63] :: (context.lengthLow) $ bit8
 
-	do @ProcessMessageBlock(context)
+	do @processMessageBlock(context)
 end func
