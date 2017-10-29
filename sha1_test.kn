@@ -1,12 +1,9 @@
 {
 	sha1_test.kn:
-		Last Modified: 2017/10/29 13:10:48.
+		Last Modified: 2017/10/29 13:11:38.
 		Created by Tatt(@tatt61880)
 		https://twitter.com/tatt61880
 		https://github.com/tatt61880
-
-	下記のページ内のコードを参考に作成しました。
-		http://www.ipa.go.jp/security/rfc/RFC3174JA.html
 }
 func main()
 	func str2bin(str: []char): []bit8
