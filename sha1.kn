@@ -62,7 +62,6 @@ end func
 end func
 
 +func result(context: @Context, messageDigest: []bit8): @Result
-	var i: int
 	if(context =& null | messageDigest =& null)
 		ret %shaNull
 	end if
@@ -134,7 +133,6 @@ end func
 
 func processMessageBlock(context: @Context)
 	var k: []bit32 :: [16#5A827999b32, 16#6ED9EBA1b32, 16#8F1BBCDCb32, 16#CA62C1D6b32] {Constants defined in SHA-1}
-	var t: int						{Loop counter}
 	var temp: bit32					{Temporary word value}
 	var w: []bit32 :: #[80]bit32	{Word sequence}
 	var a: bit32 {Word buffers}

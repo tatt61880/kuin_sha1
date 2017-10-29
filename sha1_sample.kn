@@ -1,6 +1,6 @@
 {
 	sha1_sample.kn:
-		Last Modified: 2017/04/22 20:09:36.
+		Last Modified: 2017/10/29 13:06:46.
 		Created by Tatt(@tatt61880)
 		https://twitter.com/tatt61880
 		https://github.com/tatt61880
@@ -8,16 +8,16 @@
 func main()
 	func str2bin(str: []char): []bit8
 		var retVal: []bit8 :: #[0]bit8
-		foreach c(str)
-			do retVal :~ [c $ bit8]
-		end foreach
+		for i(0, ^str - 1)
+			do retVal :~ [str[i] $ bit8]
+		end for
 		ret retVal
 	end func
 	func bin2str(bin: []bit8): []char
 		var retVal: []char :: #[0]char
-		foreach b(bin)
-			do retVal :~ [b $ char]
-		end foreach
+		for i(0, ^bin - 1)
+			do retVal :~ [bin[i] $ char]
+		end for
 		ret retVal
 	end func
 	var inputFileName: []char

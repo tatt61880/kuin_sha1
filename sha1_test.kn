@@ -1,23 +1,26 @@
 {
 	sha1_test.kn:
-		Last Modified: 2017/04/22 20:22:46.
+		Last Modified: 2017/10/29 13:10:48.
 		Created by Tatt(@tatt61880)
 		https://twitter.com/tatt61880
 		https://github.com/tatt61880
+
+	下記のページ内のコードを参考に作成しました。
+		http://www.ipa.go.jp/security/rfc/RFC3174JA.html
 }
 func main()
 	func str2bin(str: []char): []bit8
 		var retVal: []bit8 :: #[0]bit8
-		foreach c(str)
-			do retVal :~ [c $ bit8]
-		end foreach
+		for i(0, ^str - 1)
+			do retVal :~ [str[i] $ bit8]
+		end for
 		ret retVal
 	end func
 	func bin2str(bin: []bit8): []char
 		var retVal: []char :: #[0]char
-		foreach b(bin)
-			do retVal :~ [b $ char]
-		end foreach
+		for i(0, ^bin - 1)
+			do retVal :~ [bin[i] $ char]
+		end for
 		ret retVal
 	end func
 	var testArray: [][]bit8 :: [
@@ -26,7 +29,7 @@ func main()
 	|str2bin("a"),
 	|str2bin("01234567012345670123456701234567" ~ "01234567012345670123456701234567")
 	|]
- 
+
 	var repeatcount: []int :: [1, 1, 1000000, 10]
 	var resultArray: [][]char :: [
 	|"A9 99 3E 36 47 06 81 6A BA 3E 25 71 78 50 C2 6C 9C D0 D8 9D",
@@ -34,24 +37,24 @@ func main()
 	|"34 AA 97 3C D4 C4 DA A4 F6 1E EB 2B DB AD 27 31 65 34 01 6F",
 	|"DE A3 56 A2 CD DD 90 C7 A7 EC ED C5 EB B5 63 93 4F 46 04 52"
 	|]
- 
+
 	var sha: \sha1@Context :: #\sha1@Context
 	var err: \sha1@Result
- 
+
 	var messageDigest: []bit8 :: #[20]bit8
- 
+
 	{Perform SHA-1 tests}
 	for j(0, ^testArray - 1)
 		do cui@print("Test \{j + 1}:\n")
 		do cui@print("  input = '" ~ bin2str(testArray[j]) ~ "'" ~ "(length=\{^testArray[j]})\n")
 		do cui@print("  repeat count = \{repeatcount[j]}\n")
- 
+
 		do err :: \sha1@reset(sha)
 		if(err <> %shaSuccess)
 			do cui@print("SHA1Reset Error \{err $ int}.\n")
 			break j
 		end if
- 
+
 		for i(0, repeatcount[j] - 1)
 			do err :: \sha1@input(sha, testArray[j], ^testArray[j])
 			if(err <> %shaSuccess)
@@ -59,7 +62,7 @@ func main()
 				break i
 			end if
 		end for
- 
+
 		do err :: \sha1@result(sha, messageDigest)
 		if(err <> %shaSuccess)
 			do cui@print("SHA1Result Error \{err $ int}, could not compute message digest.\n")
